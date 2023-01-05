@@ -29,7 +29,7 @@ class ApiResponseSchema implements Arrayable
    *
    * @param [type] $result
    */
-  public function __construct($result = null)
+  public function __construct(mixed $result)
   {
     /**
      * @see \Illuminate\Database\Eloquent\Collection
@@ -128,9 +128,11 @@ class ApiResponseSchema implements Arrayable
    * @param [type] $data
    * @return void
    */
-  public function setResult($data = null): void
+  public function setResult(mixed $data): void
   {
-    if ($data instanceof AbstractPaginator || $data instanceof AbstractCursorPaginator) {
+    if ($data instanceof \ArrayObject && $data->count() === 0) {
+      //JsonResponse will set data to empty ArrayObject so do nothing
+    } else if ($data instanceof AbstractPaginator || $data instanceof AbstractCursorPaginator) {
       $this->resultType = 'collection';
       $this->result = AnonymousResource::collection($data);
     } elseif ($data instanceof Collection || $data instanceof ResourceCollection) {
@@ -156,7 +158,6 @@ class ApiResponseSchema implements Arrayable
       $this->resultType = 'string';
       $this->message = $data;
     } else {
-      // dd(gettype($data));
       if (gettype($data) !== 'NULL') {
         $this->resultType = gettype($data);
       }
