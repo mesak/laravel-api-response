@@ -5,4 +5,5 @@ return [
     'response' => '\Mesak\LaravelApiResponse\Http\ApiResponse', //custom response class
     'schema' => '\Mesak\LaravelApiResponse\Http\ApiResponseSchema', //custom response schema class
     'exception_trace_limit' => 3, // if set to 0, will show all trace
+    'exception_empty_show_title' => false, // if set to true, will show the exception title when the message is empty
 ];

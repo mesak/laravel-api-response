@@ -3,6 +3,7 @@
 namespace Mesak\LaravelApiResponse\Http;
 
 use JsonSerializable;
+use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Stringable;
@@ -48,6 +49,9 @@ class ApiResponseSchema implements Arrayable
   {
     $this->exception = $exception;
     $this->message  = $exception->getMessage();
+    if ($this->message === '') {
+      $this->message = config('api-response.exception_empty_show_title', true) ? Str::of(class_basename($exception))->headline() : 'Internal Server Error';
+    }
     $errorCode = ($this->exception instanceof BaseException) ? $this->exception->getErrorCode() : 500;
     $this->setFail((string) $errorCode);
   }
