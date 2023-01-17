@@ -161,6 +161,9 @@ class ApiResponseSchema implements Arrayable
     } elseif (is_string($data) || $data instanceof Stringable) {
       $this->resultType = 'string';
       $this->message = $data;
+    } else if(is_bool($data)){
+      $this->resultType = 'boolean';
+      $this->result = $data;
     } else {
       if (gettype($data) !== 'NULL') {
         $this->resultType = gettype($data);
@@ -172,9 +175,9 @@ class ApiResponseSchema implements Arrayable
   /**
    * get result
    *
-   * @return null|array
+   * @return mixed
    */
-  public function getResult(): null|array|object
+  public function getResult(): mixed
   {
     if ($this->resultType === 'collection') {
       $result = $this->result;
