@@ -4,7 +4,7 @@ namespace Mesak\LaravelApiResponse;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Response;
-
+use Mesak\LaravelApiResponse\Exceptions\BaseException;
 
 class ResponseServiceProvider extends ServiceProvider
 {
@@ -45,12 +45,13 @@ class ResponseServiceProvider extends ServiceProvider
    */
   public function registerResponseMacro(): void
   {
-    Response::macro('success', function ($result, $status = 200) {
+    Response::macro('success', function ($result = null, $status = 200) {
       return tap(new \Mesak\LaravelApiResponse\ResponseServiceProvider::$responseClass($result), function ($response) use ($status) {
         $response->setStatusCode($status);
       });
     });
-    Response::macro('error', function ($exception, $status = 500) {
+    Response::macro('error', function ($exception, $status = 400) {
+      $exception = $exception ?? new BaseException();
       return tap(new \Mesak\LaravelApiResponse\ResponseServiceProvider::$responseClass($exception), function ($response) use ($status) {
         $response->setStatusCode($status);
       });

@@ -28,7 +28,7 @@ class Handler extends ExceptionHandler
   public function render($request, Throwable $exception)
   {
     if ($this->isApiRequest($request)) {
-      $statusCode = 500;
+      $statusCode = 400;
       if ($exception instanceof BaseException) {
         $statusCode = $exception->getStatusCode();
       }

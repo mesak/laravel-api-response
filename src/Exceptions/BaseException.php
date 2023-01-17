@@ -6,8 +6,8 @@ use Exception;
 
 class BaseException extends Exception
 {
-  protected $errorCode = 500;
-  protected $statusCode = 500;
+  protected $errorCode = 400;
+  protected $statusCode = 400;
 
   public function getStatusCode(): int
   {
