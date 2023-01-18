@@ -12,8 +12,8 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Exception;
 use Mesak\LaravelApiResponse\Exceptions\BaseException;
+use Throwable;
 
 class ApiResponseSchema implements Arrayable
 {
@@ -22,7 +22,7 @@ class ApiResponseSchema implements Arrayable
   protected $resultType;
   protected $resultMeta;
   protected $message;
-  protected $exception;
+  protected $throwable;
   protected $errorCode;
 
   /**
@@ -35,49 +35,50 @@ class ApiResponseSchema implements Arrayable
     /**
      * @see \Illuminate\Database\Eloquent\Collection
      */
-    if ($result instanceof Exception) {
-      $this->setException($result);
+    if ($result instanceof Throwable) {
+      $this->setThrowable($result);
     } else {
       $this->setResult($result);
     }
   }
 
+
   /**
-   * 設定 exception
+   * 設定 Throwable
    */
-  public function setException(Exception $exception): void
+  public function setThrowable(Throwable $throwable): void
   {
-    $this->exception = $exception;
-    $this->message  = $exception->getMessage();
+    $this->throwable = $throwable;
+    $this->message  = $throwable->getMessage();
     if ($this->message === '') {
-      $this->message = config('api-response.exception_empty_show_title', true) ? Str::of(class_basename($exception))->headline() : 'Internal Server Error';
+      $this->message = config('api-response.exception_empty_show_title', true) ? Str::of(class_basename($throwable))->headline() : 'Internal Server Error';
     }
-    $errorCode = ($this->exception instanceof BaseException) ? $this->exception->getErrorCode() : 500;
+    $errorCode = ($this->throwable instanceof BaseException) ? $this->throwable->getErrorCode() : '0';
     $this->setFail((string) $errorCode);
   }
 
-  public function getException(): ?Exception
+  public function getThrowable(): ?Throwable
   {
-    return $this->exception;
+    return $this->throwable;
   }
 
   /**
    * 取得錯誤訊息
    */
-  public function getExceptionError(): ?array
+  public function getThrowableError(): ?array
   {
     $errors = null;
-    if (config('app.env') !== 'production' && is_null($this->getException()) === false) {
+    if (config('app.env') !== 'production' && is_null($this->getThrowable()) === false) {
       $errors =   [
-        'file' => $this->getException()->getFile(),
-        'line' => $this->getException()->getLine(),
-        'code' => $this->getException()->getCode(),
+        'file' => $this->getThrowable()->getFile(),
+        'line' => $this->getThrowable()->getLine(),
+        'code' => $this->getThrowable()->getCode(),
         'params' => request()->all()
       ];
       if ($limit =  config('api-response.exception_trace_limit', 0)) {
-        $errors['trace'] = array_slice($this->getException()->getTrace(), 0, $limit);
+        $errors['trace'] = array_slice($this->getThrowable()->getTrace(), 0, $limit);
       } else {
-        $errors['trace'] = $this->getException()->getTrace();
+        $errors['trace'] = $this->getThrowable()->getTrace();
       }
     }
     return $errors;
@@ -86,10 +87,10 @@ class ApiResponseSchema implements Arrayable
   /**
    * 設定 Error Code
    *
-   * @param integer $code
+   * @param string $code
    * @return void
    */
-  public function setFail(string $code = '100'): void
+  public function setFail(string $code = '0'): void
   {
     $this->success = false;
     $this->errorCode = $code;
@@ -113,7 +114,7 @@ class ApiResponseSchema implements Arrayable
    */
   public function getErrorCode(): ?string
   {
-    return $this->errorCode;
+    return $this->errorCode == '0' ? null : $this->errorCode;
   }
 
   /**
@@ -161,7 +162,7 @@ class ApiResponseSchema implements Arrayable
     } elseif (is_string($data) || $data instanceof Stringable) {
       $this->resultType = 'string';
       $this->message = $data;
-    } else if(is_bool($data)){
+    } else if (is_bool($data)) {
       $this->resultType = 'boolean';
       $this->result = $data;
     } else {
@@ -249,7 +250,7 @@ class ApiResponseSchema implements Arrayable
       'message' => $this->getMessage(),
       'result_type' => $this->getResultType(),
       'result' => $this->getResult(),
-      'exception' => $this->getExceptionError(),
+      'exception' => $this->getThrowableError(),
     ], function ($value, $key) {
       return !is_null($value);
     });
