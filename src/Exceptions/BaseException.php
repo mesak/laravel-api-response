@@ -13,8 +13,8 @@ class BaseException extends Exception
   {
     return $this->statusCode;
   }
-  public function getErrorCode(): int
+  public function getErrorCode(): string
   {
-    return $this->errorCode;
+    return (string)$this->errorCode;
   }
 }

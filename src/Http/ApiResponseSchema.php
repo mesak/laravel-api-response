@@ -7,8 +7,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Stringable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\AbstractPaginator;
 use Illuminate\Pagination\AbstractCursorPaginator;
 use Illuminate\Http\Resources\Json\ResourceCollection;
@@ -69,13 +69,13 @@ class ApiResponseSchema implements Arrayable
   {
     $errors = null;
     if (config('app.env') !== 'production' && is_null($this->getThrowable()) === false) {
-      $errors =   [
+      $errors = [
         'file' => $this->getThrowable()->getFile(),
         'line' => $this->getThrowable()->getLine(),
         'code' => $this->getThrowable()->getCode(),
         'params' => request()->all()
       ];
-      if ($limit =  config('api-response.exception_trace_limit', 0)) {
+      if ($limit = config('api-response.exception_trace_limit', 0)) {
         $errors['trace'] = array_slice($this->getThrowable()->getTrace(), 0, $limit);
       } else {
         $errors['trace'] = $this->getThrowable()->getTrace();
@@ -99,10 +99,10 @@ class ApiResponseSchema implements Arrayable
   /**
    * set errorCode
    *
-   * @param [type] $errorCode
+   * @param string $errorCode
    * @return void
    */
-  public function setErrorCode($errorCode): void
+  public function setErrorCode(string $errorCode): void
   {
     $this->errorCode = $errorCode;
   }
@@ -110,7 +110,7 @@ class ApiResponseSchema implements Arrayable
   /**
    * 取得 errorCode
    *
-   * @return int
+   * @return ?string
    */
   public function getErrorCode(): ?string
   {
@@ -130,7 +130,7 @@ class ApiResponseSchema implements Arrayable
   /**
    * set result
    *
-   * @param [type] $data
+   * @param mixed $data
    * @return void
    */
   public function setResult(mixed $data): void
@@ -207,9 +207,9 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * Undocumented function
+   * get result type
    *
-   * @return void
+   * @return ?string
    */
   public function getResultType(): ?string
   {
@@ -219,12 +219,12 @@ class ApiResponseSchema implements Arrayable
   /**
    * set message
    *
-   * @param string $data
+   * @param string $message
    * @return void
    */
-  public function setMessage(string $data): void
+  public function setMessage(string $message): void
   {
-    $this->message =  $data;
+    $this->message = $message;
   }
 
   /**

@@ -55,7 +55,7 @@ class ResponseServiceProvider extends ServiceProvider
       });
     });
     Response::macro('error', function ($exception = null, $status = 400) {
-      $exception = $exception ?? new BaseException();
+      $exception = is_null($exception) ? new BaseException() : $exception;
       return tap(new ResponseServiceProvider::$responseClass($exception), function ($response) use ($status) {
         $response->setStatusCode($status);
       });
