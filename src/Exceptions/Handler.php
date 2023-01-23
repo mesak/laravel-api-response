@@ -3,12 +3,13 @@
 namespace Mesak\LaravelApiResponse\Exceptions;
 
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use App\Exceptions\Handler as ExceptionHandler;
 use Mesak\LaravelApiResponse\Exceptions\BaseException;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
+  
   /**
    * Check if the given request is an API request.
    */
@@ -16,6 +17,7 @@ class Handler extends ExceptionHandler
   {
     return $request->is(config('api-response.paths', []));
   }
+
   /**
    * Render an exception into an HTTP response.
    *

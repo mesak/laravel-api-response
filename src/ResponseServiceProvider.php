@@ -10,6 +10,7 @@ class ResponseServiceProvider extends ServiceProvider
 {
   static $responseClass = \Mesak\LaravelApiResponse\Http\ApiResponse::class;
   static $responseSchema = \Mesak\LaravelApiResponse\Http\ApiResponseSchema::class;
+
   /**
    * Bootstrap the application services.
    *
@@ -24,6 +25,7 @@ class ResponseServiceProvider extends ServiceProvider
     }
     $this->defaultResponseConfig();
     $this->registerResponseMacro();
+    $this->registerErrorHandling();
   }
 
   /**
@@ -37,11 +39,17 @@ class ResponseServiceProvider extends ServiceProvider
     $this->mergeConfigFrom(__DIR__ . '/../config/api-response.php', 'api-response');
   }
 
+  /**
+   * Register default response config
+   *
+   * @return void
+   */
   public function defaultResponseConfig(): void
   {
     static::$responseClass = config('api-response.response', static::$responseClass);
     static::$responseSchema = config('api-response.schema', static::$responseSchema);
   }
+
   /**
    * Register the event listener for the event.
    *
@@ -59,6 +67,18 @@ class ResponseServiceProvider extends ServiceProvider
       return tap(new ResponseServiceProvider::$responseClass($exception), function ($response) use ($status) {
         $response->setStatusCode($status);
       });
+    });
+  }
+
+  /**
+   * Register Error Handling api render
+   *
+   * @return void
+   */
+  public function registerErrorHandling(): void
+  {
+    $this->app->bind(\Illuminate\Contracts\Debug\ExceptionHandler::class, function ($app) {
+      return new Exceptions\Handler($app['Illuminate\Contracts\Container\Container']);
     });
   }
 }

@@ -20,19 +20,6 @@ Or you could directly reference it into your `composer.json` file as a dependenc
 }
 ```
 
-## Exception\Handler
-
-change your `app/Exceptions/Handler.php` file
-
-```php
-namespace App\Exceptions;
-
-use Mesak\LaravelApiResponse\Exceptions\Handler  as ExceptionHandler;
-
-```
-
-then your exception handler will return api response
-
 ## Controller
 
 change your api controller, to extend `Mesak\LaravelApiResponse\Http\Controllers\Controller`
