@@ -162,3 +162,13 @@ class MainController extends \App\Http\Controllers\Controller
   }
 }
 ```
+
+
+## custom config
+
+You can customise your api schema content with a custom config.php.
+
+```bash
+php artisan vendor:publish --tag=api-response --force
+```
+
