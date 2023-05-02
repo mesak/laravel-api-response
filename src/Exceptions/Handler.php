@@ -2,14 +2,14 @@
 
 namespace Mesak\LaravelApiResponse\Exceptions;
 
-use Illuminate\Http\Request;
 use App\Exceptions\Handler as ExceptionHandler;
 use Mesak\LaravelApiResponse\Exceptions\BaseException;
+use Illuminate\Http\Request;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
-  
+
   /**
    * Check if the given request is an API request.
    */
@@ -30,7 +30,7 @@ class Handler extends ExceptionHandler
   public function render($request, Throwable $exception)
   {
     if ($this->isApiRequest($request)) {
-      $statusCode = config('api-response.error_status_code');
+      $statusCode = config('api-response.error_status_code', 400);
       if ($exception instanceof BaseException) {
         $statusCode = $exception->getStatusCode();
       }
