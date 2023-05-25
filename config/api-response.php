@@ -1,7 +1,7 @@
 <?php
 return [
     'everything_is_ok' => false, // true: all success is 200, false: will see the real status code
-    'error_status_code' => 200, //default error http status code
+    'error_status_code' => 500, //default error http status code
     'paths' => [
         'api/*', 
         'oauth/*'
