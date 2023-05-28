@@ -30,7 +30,7 @@ class Handler extends ExceptionHandler
   public function render($request, Throwable $exception)
   {
     if ($this->isApiRequest($request)) {
-      $statusCode = config('api-response.error_status_code', 400);
+      $statusCode = config('api-response.error_status_code', 500);
       if ($exception instanceof BaseException) {
         $statusCode = $exception->getStatusCode();
       }

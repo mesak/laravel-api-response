@@ -20,7 +20,6 @@ class ApiResponseSchema implements Arrayable
   protected $success = true;
   protected $result;
   protected $resultType;
-  protected $resultMeta;
   protected $message;
   protected $throwable;
   protected $errorCode;
