@@ -21,7 +21,7 @@ class ApiResponseSchema implements Arrayable
   protected $result;
   protected $resultType;
   protected $message;
-  protected $throwable;
+  protected $exception;
   protected $errorCode;
 
   /**
@@ -35,56 +35,63 @@ class ApiResponseSchema implements Arrayable
      * @see \Illuminate\Database\Eloquent\Collection
      */
     if ($result instanceof Throwable) {
-      $this->setThrowable($result);
+      $this->setException($result);
     } else {
       $this->setResult($result);
     }
   }
 
-
   /**
-   * 設定 Throwable
+   * 設定 Exception
    */
-  public function setThrowable(Throwable $throwable): void
+  public function setException(Throwable $exception): void
   {
-    $this->throwable = $throwable;
-    $this->message  = $throwable->getMessage();
+    $this->exception = $exception;
+    $this->message = $exception->getMessage();
     if ($this->message === '') {
-      $this->message = config('api-response.exception_empty_show_title', true) ? Str::of(class_basename($throwable))->headline() : 'Internal Server Error';
+      $this->message = config('api-response.exception_empty_show_title', true)
+        ? Str::of(class_basename($exception))->headline()
+        : 'Internal Server Error';
     }
-    $errorCode = ($this->throwable instanceof BaseException) ? $this->throwable->getErrorCode() : '0';
+    $errorCode = ($this->exception instanceof BaseException) ? $this->exception->getErrorCode() : '0';
     $this->setFail((string) $errorCode);
   }
 
-  public function getThrowable(): ?Throwable
+  /**
+   * 取得 Exception
+   *
+   * @return Throwable|null
+   */
+  public function getException(): ?Throwable
   {
-    return $this->throwable;
+    return $this->exception;
   }
 
   /**
    * 取得錯誤訊息
    */
-  public function getThrowableError(): ?array
+  public function getExceptionError(): ?array
   {
     $errors = null;
-    if (config('app.env') !== 'production' && is_null($this->getThrowable()) === false) {
+    if (config('app.env') !== 'production' && is_null($this->getException()) === false) {
       $errors = [
-        'file' => $this->getThrowable()->getFile(),
-        'line' => $this->getThrowable()->getLine(),
-        'code' => $this->getThrowable()->getCode(),
+        'file' => $this->getException()->getFile(),
+        'line' => $this->getException()->getLine(),
+        'code' => $this->getException()->getCode(),
         'params' => request()->all()
       ];
+
       if ($limit = config('api-response.exception_trace_limit', 0)) {
-        $errors['trace'] = array_slice($this->getThrowable()->getTrace(), 0, $limit);
+        $errors['trace'] = array_slice($this->getException()->getTrace(), 0, $limit);
       } else {
-        $errors['trace'] = $this->getThrowable()->getTrace();
+        $errors['trace'] = $this->getException()->getTrace();
       }
     }
     return $errors;
   }
 
   /**
-   * 設定 Error Code
+   * 設定 錯誤並設定錯誤代碼
    *
    * @param string $code
    * @return void
@@ -96,7 +103,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * set errorCode
+   * 設定 錯誤代碼
    *
    * @param string $errorCode
    * @return void
@@ -117,7 +124,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * get success
+   * 取得 成功狀態
    *
    * @return boolean
    */
@@ -127,7 +134,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * set result
+   * 設定 結果
    *
    * @param mixed $data
    * @return void
@@ -173,7 +180,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * get result
+   * 取得 結果
    *
    * @return mixed
    */
@@ -206,7 +213,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * get result type
+   * 取得 結果類型
    *
    * @return ?string
    */
@@ -216,7 +223,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * set message
+   * 設定 訊息
    *
    * @param string $message
    * @return void
@@ -227,7 +234,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * get message
+   * 取得 訊息
    *
    * @return string
    */
@@ -237,7 +244,7 @@ class ApiResponseSchema implements Arrayable
   }
 
   /**
-   * 產生 array 資料表
+   * 產生 結果內容
    *
    * @return
    */
@@ -249,7 +256,7 @@ class ApiResponseSchema implements Arrayable
       'message' => $this->getMessage(),
       'result_type' => $this->getResultType(),
       'result' => $this->getResult(),
-      'exception' => $this->getThrowableError(),
+      'exception' => $this->getExceptionError(),
     ], function ($value, $key) {
       return !is_null($value);
     });

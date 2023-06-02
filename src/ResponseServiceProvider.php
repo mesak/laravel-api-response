@@ -57,15 +57,21 @@ class ResponseServiceProvider extends ServiceProvider
    */
   public function registerResponseMacro(): void
   {
-    Response::macro('success', function ($result = null, $status = 200) {
-      return tap(new ResponseServiceProvider::$responseClass($result), function ($response) use ($status) {
-        $response->setStatusCode($status);
+    Response::macro('success', function ($result = null, $statusCode = 200) {
+      return tap(new ResponseServiceProvider::$responseClass($result), function ($response) use ($statusCode) {
+        $response->setStatusCode($statusCode);
       });
     });
-    Response::macro('error', function ($exception = null, $status = 400) {
+
+    Response::macro('error', function ($exception = null, $statusCode = 400) {
       $exception = is_null($exception) ? new BaseException() : $exception;
-      return tap(new ResponseServiceProvider::$responseClass($exception), function ($response) use ($status) {
-        $response->setStatusCode($status);
+      return tap(new ResponseServiceProvider::$responseClass($exception), function ($response) use ($exception, $statusCode) {
+        if ($exception instanceof BaseException) {
+          $statusCode = $exception->getStatusCode();
+        }else if($exception instanceof \Throwable) {
+          $statusCode = property_exists($exception, 'status') ? $exception->status : $statusCode;
+        }
+        $response->setStatusCode($statusCode);
       });
     });
   }
