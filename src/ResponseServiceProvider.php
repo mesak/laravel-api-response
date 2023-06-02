@@ -4,6 +4,7 @@ namespace Mesak\LaravelApiResponse;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Response;
+use Mesak\LaravelApiResponse\Exceptions\BadRequestException;
 use Mesak\LaravelApiResponse\Exceptions\BaseException;
 
 class ResponseServiceProvider extends ServiceProvider
@@ -64,13 +65,14 @@ class ResponseServiceProvider extends ServiceProvider
     });
 
     Response::macro('error', function ($exception = null, $statusCode = 400) {
-      $exception = is_null($exception) ? new BaseException() : $exception;
-      return tap(new ResponseServiceProvider::$responseClass($exception), function ($response) use ($exception, $statusCode) {
-        if ($exception instanceof BaseException) {
-          $statusCode = $exception->getStatusCode();
-        }else if($exception instanceof \Throwable) {
-          $statusCode = property_exists($exception, 'status') ? $exception->status : $statusCode;
-        }
+      if ($exception instanceof BaseException) {
+        $statusCode = $exception->getStatusCode();
+      } else if ($exception instanceof \Throwable) {
+        $statusCode = property_exists($exception, 'status') ? $exception->status : $statusCode;
+      } else {
+        $exception = new BadRequestException((string)$exception);
+      }
+      return tap(new ResponseServiceProvider::$responseClass($exception), function ($response) use ($statusCode) {
         $response->setStatusCode($statusCode);
       });
     });

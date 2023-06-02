@@ -3,11 +3,12 @@
 namespace Mesak\LaravelApiResponse\Exceptions;
 
 use Exception;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class BaseException extends Exception
 {
-  protected $errorCode = 400;
-  protected $statusCode = 400;
+  protected $errorCode = SymfonyResponse::HTTP_INTERNAL_SERVER_ERROR; // 500
+  protected $statusCode = SymfonyResponse::HTTP_INTERNAL_SERVER_ERROR; // 500
 
   public function getStatusCode(): int
   {
