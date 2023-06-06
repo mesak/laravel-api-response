@@ -31,11 +31,28 @@ class Handler extends ExceptionHandler
   {
     if ($this->isApiRequest($request)) {
 
-      if ($response = $this->renderViaCallbacks($request, $exception)) {
-        return $response;
+      $e = $this->prepareException($this->mapException($exception));
+
+      if (method_exists($this, 'renderViaCallbacks')) {
+        $response = $this->renderViaCallbacks($request, $e);
+        if ($response) {
+          return $response;
+        }
+      } else {
+        foreach ($this->renderCallbacks as $renderCallback) {
+          foreach ($this->firstClosureParameterTypes($renderCallback) as $type) {
+            if (is_a($e, $type)) {
+              $response = $renderCallback($e, $request);
+
+              if (!is_null($response)) {
+                return $response;
+              }
+            }
+          }
+        }
       }
-      
-      return response()->error($exception);
+
+      return response()->error($e);
     }
     return parent::render($request, $exception);
   }
