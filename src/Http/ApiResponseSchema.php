@@ -6,7 +6,6 @@ use JsonSerializable;
 use Illuminate\Support\Str;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Stringable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\AbstractPaginator;
@@ -19,7 +18,7 @@ class ApiResponseSchema implements Arrayable
 {
   protected $success = true;
   protected $result;
-  protected $resultType;
+  protected $resultMeta;
   protected $message;
   protected $exception;
   protected $errorCode;
@@ -27,7 +26,7 @@ class ApiResponseSchema implements Arrayable
   /**
    * 初始化 result
    *
-   * @param [type] $result
+   * @param mixed $result
    */
   public function __construct(mixed $result)
   {
@@ -43,6 +42,9 @@ class ApiResponseSchema implements Arrayable
 
   /**
    * 設定 Exception
+   * 
+   * @param Throwable $exception
+   * @return void
    */
   public function setException(Throwable $exception): void
   {
@@ -69,6 +71,8 @@ class ApiResponseSchema implements Arrayable
 
   /**
    * 取得錯誤訊息
+   * 
+   * @return string|null
    */
   public function getExceptionError(): ?array
   {
@@ -143,38 +147,8 @@ class ApiResponseSchema implements Arrayable
   {
     if ($data instanceof \ArrayObject && $data->count() === 0) {
       //JsonResponse will set data to empty ArrayObject so do nothing
-    } else if ($data instanceof AbstractPaginator || $data instanceof AbstractCursorPaginator) {
-      $this->resultType = 'collection';
-      $this->result = AnonymousResource::collection($data);
-    } elseif ($data instanceof Collection || $data instanceof ResourceCollection) {
-      $this->resultType = 'collection';
-      $this->result = $data;
-    } elseif (
-      $data instanceof Model ||
-      $data instanceof \stdClass ||
-      $data instanceof JsonSerializable ||
-      (is_array($data) && !Arr::isList($data)
-      )
-    ) {
-      $this->resultType = 'resource';
-      $this->result = $data;
-    } elseif (
-      $data instanceof \ArrayObject ||
-      $data instanceof Arrayable ||
-      is_array($data)
-    ) {
-      $this->resultType = 'collection';
-      $this->result = $data;
-    } elseif (is_string($data) || $data instanceof Stringable) {
-      $this->resultType = 'string';
-      $this->message = $data;
-    } else if (is_bool($data)) {
-      $this->resultType = 'boolean';
-      $this->result = $data;
     } else {
-      if (gettype($data) !== 'NULL') {
-        $this->resultType = gettype($data);
-      }
+
       $this->result = $data;
     }
   }
@@ -186,40 +160,77 @@ class ApiResponseSchema implements Arrayable
    */
   public function getResult(): mixed
   {
-    if ($this->resultType === 'collection') {
-      $result = $this->result;
-      if (
-        $this->result instanceof \ArrayObject ||
-        $this->result instanceof Arrayable ||
-        is_array($this->result)
-      ) {
-        //is array
-      } else if (
-        $this->result instanceof AbstractPaginator || $this->result instanceof AbstractCursorPaginator ||
-        ($this->result->resource &&
-          $this->result->resource instanceof AbstractPaginator ||
-          $this->result->resource instanceof AbstractCursorPaginator
-        )
-      ) {
-        $response = $this->result->response()->getData();
-        $result = [
-          'data' => $response->data,
-          'meta' => $response->meta,
-        ];
-      }
-      return $result;
+    $result = $this->result;
+    if (
+      is_object($this->result) &&
+      $this->result instanceof ResourceCollection &&
+      ($this->result->resource instanceof AbstractPaginator || $this->result->resource instanceof AbstractCursorPaginator)
+    ) {
+      $result = data_get($this->result->response()->getData(), 'data', []);
     }
-    return $this->result;
+    return $result;
+  }
+
+  /**
+   * 取得 結果Meta
+   *
+   * @return mixed|null
+   */
+  public function getResultMeta(): mixed
+  {
+    $resultMeta = $this->resultMeta;
+
+    if (
+      is_object($this->result) &&
+      $this->result instanceof ResourceCollection &&
+      ($this->result->resource instanceof AbstractPaginator || $this->result->resource instanceof AbstractCursorPaginator)
+    ) {
+
+      $resultMeta = data_get($this->result->response()->getData(), 'meta');
+    }
+
+    return $resultMeta;
   }
 
   /**
    * 取得 結果類型
    *
-   * @return ?string
+   * @return string|null
    */
   public function getResultType(): ?string
   {
-    return $this->resultType;
+    $resultType = gettype($this->result);
+
+    if ($resultType === 'NULL') {
+
+      return null;
+    }
+
+    if (in_array($resultType, ['integer', 'double'])) {
+
+      return 'number';
+    }
+
+    if (is_object($this->result)) {
+
+      $resultType = 'resource';
+
+      if ($this->result instanceof Collection || $this->result instanceof ResourceCollection) {
+
+        $resultType = 'collection';
+      } elseif ($this->result instanceof Model ||  $this->result instanceof \stdClass || $this->result instanceof JsonSerializable || (is_array($this->result) && !Arr::isList($this->result))) {
+
+        $resultType = 'resource';
+      } elseif ($this->result instanceof \ArrayObject || $this->result instanceof Arrayable) {
+
+        $resultType = 'collection';
+      }
+    } elseif (is_array($this->result)) {
+
+      $resultType = Arr::isList($this->result) ? 'collection' : 'resource';
+    }
+
+    return $resultType;
   }
 
   /**
@@ -236,7 +247,7 @@ class ApiResponseSchema implements Arrayable
   /**
    * 取得 訊息
    *
-   * @return string
+   * @return string|null
    */
   public function getMessage(): ?string
   {
@@ -246,18 +257,19 @@ class ApiResponseSchema implements Arrayable
   /**
    * 產生 結果內容
    *
-   * @return
+   * @return array
    */
   public function toArray(): array
   {
     return Arr::where([
-      'status' => $this->getSuccess() ? 'success' : 'error',
-      'error_code' => $this->getErrorCode(),
-      'message' => $this->getMessage(),
-      'result_type' => $this->getResultType(),
-      'result' => $this->getResult(),
-      'exception' => $this->getExceptionError(),
-    ], function ($value, $key) {
+      'status'           => $this->getSuccess() ? 'success' : 'error',
+      'error_code'       => $this->getErrorCode(),
+      'message'          => $this->getMessage(),
+      'result_type'      => $this->getResultType(),
+      'result'           => $this->getResult(),
+      'result_meta'      => $this->getResultMeta(),
+      'exception'        => $this->getExceptionError(),
+    ], function ($value) {
       return !is_null($value);
     });
   }
