@@ -65,7 +65,7 @@ class ResponseServiceProvider extends ServiceProvider
     });
 
     Response::macro('error', function ($exception = null, $statusCode = 400) {
-      if ($exception instanceof BaseException) {
+      if ($exception instanceof HttpExceptionInterface) {
         $statusCode = $exception->getStatusCode();
       } else if ($exception instanceof \Throwable) {
         $statusCode = property_exists($exception, 'status') ? $exception->status : $statusCode;
