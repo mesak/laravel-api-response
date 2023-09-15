@@ -4,8 +4,9 @@ namespace Mesak\LaravelApiResponse;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Mesak\LaravelApiResponse\Exceptions\BadRequestException;
-use Mesak\LaravelApiResponse\Exceptions\BaseException;
+// use Mesak\LaravelApiResponse\Exceptions\BaseException;
 
 class ResponseServiceProvider extends ServiceProvider
 {
